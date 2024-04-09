@@ -1,0 +1,11 @@
+*.o
+
+*.bpf.o
+
+*.h
+
+libbpf
+
+.vscode
+
+replace
