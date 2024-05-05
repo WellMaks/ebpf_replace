@@ -76,6 +76,7 @@ int handle_read_enter(struct trace_event_raw_sys_enter *ctx)
     return 0;
 
 }
+
 // modify the file so i can read the content of the file in the printk
 SEC("tp/syscalls/sys_exit_read")
 int handle_read_exit(struct trace_event_raw_sys_exit *ctx)
@@ -88,14 +89,19 @@ int handle_read_exit(struct trace_event_raw_sys_exit *ctx)
     int pid = id >> 32;
 
     unsigned int fd = *check;
-    // Assuming ctx->ret is the number of bytes read, no need to compare it with fd
+
+    const char replacement[] = "Replacement text";
+    int ret = bpf_probe_write_user((void*)ctx->ret, replacement, sizeof(replacement));
+    if (ret != 0) {
+        bpf_printk("Failed to write replaced content for PID %d and FD %d\n", pid, fd);
+        return 0;
+    }
+
     bpf_printk("Read syscall by PID %d on FD %d returned %d bytes\n", pid, fd, (int)ctx->ret);
-    
+    bpf_printk("Replaced content: %s\n", replacement);
 
     return 0;
 }
 
 
 char LICENSE[] SEC("license") = "GPL";
-
-
